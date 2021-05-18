@@ -1,0 +1,5 @@
+2
+Tests/SaveFileTest/saveFile.save
+place R3 at G5
+save Tests/SaveFileTest/newSaveFile.save
+^D

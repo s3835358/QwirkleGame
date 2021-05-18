@@ -1,0 +1,5 @@
+2
+Tests/InvalidTilePlacement/InvalidTilePlacement.save
+place R3 at D2
+place Y3 at D5
+^D
