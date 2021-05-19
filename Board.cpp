@@ -440,6 +440,26 @@ bool Board::checkMultiple(Board* toCheck, vector<int*>* locationsPtr, vector<str
     }
     
     // Do something with rCount + cCount
+    // Alter scoring for multiple
+
+    /*
+     * Added G2, G5 and Y5
+     * |  |  |  |  |  |  |  |
+     * |  |  |  |  |  |  |  |
+     * |  |Y3|G3|  |  |  |  | 
+     * |  |  |G2|  |  |  |  | 
+     * |  |  |G5|Y5|  |  |  |
+     * |  |  |  |  |  |  |  |
+     * |  |  |  |  |  |  |  |
+     * |  |  |  |  |  |  |  |   
+     * 
+     * Y5 2pts
+     * G5 5pts
+     * G2 3pts
+     */
+
+
+
 
     return valid;
 }
