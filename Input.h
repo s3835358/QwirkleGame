@@ -20,6 +20,7 @@ class Input {
         std::string prompt(bool* isEOF);
         bool areLetters(std::string playerName);
         std::vector<std::string> splitActions(std::string action);
+        bool getMultiple();
        
 
 

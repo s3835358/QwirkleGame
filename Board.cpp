@@ -372,3 +372,9 @@ void Board::printBoard() {
         cout << endl; 
     }   
 } 
+
+/*
+ *
+ *    MILESTONE 3 ONWARDS
+ *
+ */

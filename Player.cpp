@@ -43,3 +43,8 @@ LinkedList* Player::getHand(){
     return hand;
 }
 
+/*
+ *
+ *    MILESTONE 3 ONWARDS
+ *
+ */

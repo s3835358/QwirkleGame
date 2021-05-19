@@ -85,3 +85,8 @@ bool Tile::compare(Tile* other){
     return valid;
 }
 
+/*
+ *
+ *    MILESTONE 3 ONWARDS
+ *
+ */

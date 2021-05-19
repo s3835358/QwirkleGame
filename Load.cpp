@@ -128,3 +128,9 @@ void Load::loadList(LinkedList** listPtr, string tiles){
     list->addBack(tile);
     delete tile;
 }
+
+/*
+ *
+ *    MILESTONE 3 ONWARDS
+ *
+ */
