@@ -371,4 +371,75 @@ void Board::printBoard() {
         } 
         cout << endl; 
     }   
-} 
+}
+
+/*
+ *
+ *  MILESTONE 3 ONWARDS
+ * 
+ */
+
+bool Board::multiplePlace(vector<int*>* locationsPtr, vector<string>* tilesPtr) {
+    bool placed = false;
+
+    // tiles are Y6, locations are A2, G23
+
+    // Does this create copy?
+    Board toCheck = *this;
+
+    // Already know locations are within bounds, don't know if 'valid'
+    placed = checkMultiple(&toCheck, locationsPtr, tilesPtr);
+
+    return placed;
+}
+
+bool Board::checkMultiple(Board* toCheck, vector<int*>* locationsPtr, vector<string>* tilesPtr) {
+    bool valid = true;
+    
+    vector<int*> locations = *locationsPtr;
+    vector<string> tiles = *tilesPtr;
+    int i = 0;
+    int rCount = 0,
+    cCount = 0;
+
+    Tile* tile = nullptr;
+
+    // Place tiles first as we don't ask user for tiles in any specific order
+    for(int* location : locations) {
+        int row = location[ROW_IND];
+        int col = location[COL_IND];
+        
+        // Should vector be initialised as vector<Tile*> instead?
+        // Assume locations & tiles are same size, haven't checked tile validity
+        Tile* tile = new Tile(tiles.at(i));
+
+        if(board[row][col] != nullptr){
+            board[row][col] = tile;
+        } else {
+            delete tile;
+            valid = false;
+        }
+
+        i++;
+    }
+
+    // Then check validity
+    if(valid) {
+
+        for(int* location : locations) {
+            // Better to use while(valid) ?
+            if(valid) {
+                int row = location[ROW_IND];
+                int col = location[COL_IND];
+                tile =  board[row][col];
+                valid = isLegalPlace(row, col, tile, &rCount, &cCount);
+            }
+            
+        }
+
+    }
+    
+    // Do something with rCount + cCount
+
+    return valid;
+}

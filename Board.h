@@ -23,6 +23,8 @@ class Board {
         bool getLocation(std::string locStr, int** location);
         std::string getTiles();
 
+        bool multiplePlace(vector<int*>* locationsPtr, vector<string>* tilesPtr);
+
     private: 
 
         int* getLocation(std::string locStr);
@@ -33,6 +35,12 @@ class Board {
         bool isLegalPlace(int row, int col, Tile* tile, int* rPtr, int* cPtr);
 
         void fill(std::string tiles);
+
+        bool multiplePlace(std::vector<int*>* locationsPtr,
+        std::vector<std::string>* tilesPtr);
+
+        bool checkMultiple(Board* toCheck, std::vector<int*>* locationsPtr,
+        vector<std::string>* tilesPtr);
 
         int rows;
         int columns;
