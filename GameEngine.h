@@ -50,11 +50,11 @@ private:
     bool runReplace(std::vector<std::string> actions, Board* board, 
     Player* player, LinkedList* tileBag);
 
-    bool checkMultiple(std::vector<std::string> actions, Board* board,
-    std::vector<int*>* locationsPtr,std::vector<std::string>* tilesPtr);
+    bool checkMultiple(std::vector<std::string>* actions, Board* board,
+    std::vector<int*>* locationsPtr,std::vector<Tile*>* tilesPtr);
 
-    void runMultiple(std::vector<int*>* locationsPtr,
-    std::vector<std::string>* tilesPtr, Board* board);
+    bool runMultiple(std::vector<std::string>* actions, Board* board,
+    std::vector<int*>* locationsPtr, std::vector<Tile*>* tilesPtr);
 
     bool fileExists(std::string path);
     

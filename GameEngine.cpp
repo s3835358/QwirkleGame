@@ -230,11 +230,8 @@ LinkedList* tileBag, Player* pCurrent, bool* isEOF){
       } else if (actions.front() == MULTIPLE) {
 
          vector<int*> locations;
-         vector<string> tiles;
-         didRun = checkMultiple(actions, board, &locations, &tiles);
-         if(didRun) {
-            runMultiple(&locations, &tiles, board);
-         }
+         vector<Tile*> tiles;
+         didRun = runMultiple(&actions, board, &locations, &tiles);
 
       } else if (actions.size() == PLACE) {
          
@@ -530,15 +527,17 @@ bool GameEngine::checkEndGame(Player* p1, Player* p2, LinkedList* tileBag) {
  *
  */
 
-bool GameEngine::checkMultiple(vector<string> actions, Board* board,
-vector<int*>* locationsPtr, vector<string>* tilesPtr) {
+bool GameEngine::checkMultiple(vector<string>* actionsPtr, Board* board,
+vector<int*>* locationsPtr, vector<Tile*>* tilesPtr) {
    
    // Y6@C22, G1@W7
 
    bool isLoc = true;
    vector<int*> locations;
-   vector<string> tiles;
+   vector<Tile*> tiles;
+   vector<string> actions = *actionsPtr;
    int* location = nullptr;
+   Tile* tile = nullptr;
    
    // Magic number (skip front)
    int i = 1; 
@@ -547,23 +546,23 @@ vector<int*>* locationsPtr, vector<string>* tilesPtr) {
    size_t at = action.find('@'),
    comma = action.find(',');
 
-   while(comma!=string::npos) {
+   while(comma!=string::npos && isLoc) {
       
       location = new int[LOCATION];
       int start = at + CHAR, 
       end = comma - at - CHAR;
 
       isLoc = board->getLocation(action.substr(start, end), &location);
+      tile = getTile(action.substr(0,at));
 
-      if(isLoc) {
+      if(isLoc && tile != nullptr) {
          locations.push_back(location);
          // Magic number (skip space)
-         tiles.push_back(action.substr(0,at));
-         cout << action.substr(0,at);
+         tiles.push_back(tile);
 
       } else {
          delete[] location;
-
+         isLoc = false;
       }
 
       i++;
@@ -572,23 +571,36 @@ vector<int*>* locationsPtr, vector<string>* tilesPtr) {
       comma = action.find(',');
    }
 
-   location = new int[LOCATION];
-   isLoc = board->getLocation(action.substr(at + TILE), &location);
-
    if(isLoc) {
-      locations.push_back(location);
-      tiles.push_back(action.substr(0,at));
+      location = new int[LOCATION];
+      isLoc = board->getLocation(action.substr(at + TILE), &location);
+      tile = getTile(action.substr(0,at));
+
+      if(isLoc && tile != nullptr) {
+         locations.push_back(location);
+         tiles.push_back(tile);
+      } else {
+         delete[] location;
+         isLoc = false;
+      }
+
+      *locationsPtr = locations;
+      *tilesPtr = tiles;
    }
-
-   *locationsPtr = locations;
-   *tilesPtr = tiles;
-
+   
    return isLoc;
 }
 
-void GameEngine::runMultiple(vector<int*>* locationsPtr,
-vector<string>* tilesPtr, Board* board) {
+bool GameEngine::runMultiple(vector<string>* actions, Board* board, 
+vector<int*>* locationsPtr, vector<Tile*>* tilesPtr) {
 
-   // Create method on board class to place multiple
-   
+   bool valid = checkMultiple(actions, board, locationsPtr, tilesPtr);
+
+   if(valid) {
+      valid = board->multiplePlace(locationsPtr, tilesPtr);
+   }
+
+   cout << "printed to check";
+
+   return valid;
 }

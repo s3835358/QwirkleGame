@@ -25,7 +25,7 @@ using std::cout;
 using std::endl;
 using std::to_string;
 
-vector<vector<Tile*> > board( DEFAULT_ROWS  , vector<Tile*> (DEFAULT_COLUMNS));
+vector<vector<Tile*>> board (DEFAULT_ROWS, vector<Tile*> (DEFAULT_COLUMNS));
 
 /*
  *  Our game board. Assigns tiles to a location [row][column].
@@ -40,7 +40,8 @@ Board::Board() {
     for (int row = 0; row < rows; row++) { 
         for (int column = 0; column < columns; column++) { 
             board[row][column] = nullptr;
-        } 
+        }
+        
     }    
     isEmpty = true;
 } 
@@ -379,25 +380,40 @@ void Board::printBoard() {
  * 
  */
 
-bool Board::multiplePlace(vector<int*>* locationsPtr, vector<string>* tilesPtr) {
+bool Board::multiplePlace(vector<int*>* locationsPtr, vector<Tile*>* tilesPtr) {
     bool placed = false;
 
     // tiles are Y6, locations are A2, G23
 
-    // Does this create copy?
-    Board toCheck = *this;
-
     // Already know locations are within bounds, don't know if 'valid'
-    placed = checkMultiple(&toCheck, locationsPtr, tilesPtr);
+    placed = checkMultiple(locationsPtr, tilesPtr);
+    if(!placed) {
+        deleteMultiple(locationsPtr);
+    }
 
     return placed;
 }
 
-bool Board::checkMultiple(Board* toCheck, vector<int*>* locationsPtr, vector<string>* tilesPtr) {
+void Board::deleteMultiple(vector<int*>* locationsPtr) {
+    vector<int*> locations = *locationsPtr;
+    Tile* tile = nullptr;
+   
+    for(int* location : locations) {
+        int row = location[ROW_IND];
+        int col = location[COL_IND];
+        
+        tile = board[row][col];
+        board[row][col] = nullptr;
+        delete tile;
+    }
+}
+
+bool Board::checkMultiple(vector<int*>* locationsPtr,
+vector<Tile*>* tilesPtr) {
     bool valid = true;
     
     vector<int*> locations = *locationsPtr;
-    vector<string> tiles = *tilesPtr;
+    vector<Tile*> tiles = *tilesPtr;
     int i = 0;
     int rCount = 0,
     cCount = 0;
@@ -411,9 +427,9 @@ bool Board::checkMultiple(Board* toCheck, vector<int*>* locationsPtr, vector<str
         
         // Should vector be initialised as vector<Tile*> instead?
         // Assume locations & tiles are same size, haven't checked tile validity
-        Tile* tile = new Tile(tiles.at(i));
+        Tile* tile = tiles.at(i);
 
-        if(board[row][col] != nullptr){
+        if(board[row][col] == nullptr){
             board[row][col] = tile;
         } else {
             delete tile;
@@ -434,11 +450,11 @@ bool Board::checkMultiple(Board* toCheck, vector<int*>* locationsPtr, vector<str
                 tile =  board[row][col];
                 valid = isLegalPlace(row, col, tile, &rCount, &cCount);
             }
-            
         }
-
     }
-    
+
+
+
     // Do something with rCount + cCount
     // Alter scoring for multiple
 
@@ -459,7 +475,33 @@ bool Board::checkMultiple(Board* toCheck, vector<int*>* locationsPtr, vector<str
      */
 
 
-
+    cout << "Check: " << valid << endl;
 
     return valid;
 }
+
+/*Board::Board(Board &other) {
+    rows = other.getRows();
+    columns = other.getColumns();
+    isEmpty = true;
+    Tile* tile = nullptr;
+
+    for (int row = 0; row < rows; row++) { 
+        for (int column = 0; column < columns; column++) { 
+
+            board[row][column] = nullptr;
+            tile = other.getTile(row, column);
+            
+            if(tile != nullptr) {
+                board[row][column] = new Tile(*tile);
+                cout << tile;
+                cout << board[row][column];
+                isEmpty = false;
+            }
+        } 
+    }    
+}
+
+Tile* Board::getTile(int row, int col) {
+    return board[row][col];
+}*/
