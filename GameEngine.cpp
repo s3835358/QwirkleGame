@@ -716,12 +716,10 @@ vector<Tile*>* tilesPtr, bool* sameRow) {
 
          if(prevInt[ROW_IND] == location[ROW_IND]) {
             *sameRow = true;
-            cout << "SAME ROW" << endl;
          } 
          
          if(prevInt[COL_IND] == location[COL_IND]) {
             sameCol = true;
-            cout << "SAME COL" << endl;
          }
 
          // Checks tiles a

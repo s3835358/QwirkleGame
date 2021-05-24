@@ -117,15 +117,12 @@ string playerInfo) {
        
 
         if(lineNumber == PLAYER_NAME) {
-            std::cout << "Name: " << savedGameContent << std::endl;
             loadPlayerName(player, savedGameContent);
 
         } else if (lineNumber == PLAYER_SCORE) {
-            std::cout << "Score: " << savedGameContent << std::endl;
             loadPlayerScore(player, savedGameContent);
                 
         } else if (lineNumber == PLAYER_HAND) {
-            std::cout << "Hand: " << savedGameContent << std::endl;
 
             LinkedList* hand = player->getHand();
             

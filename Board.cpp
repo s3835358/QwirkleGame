@@ -6,8 +6,6 @@
 #include <vector>
 #include <sstream>
 
-#define DEFAULT_ROWS            26 
-#define DEFAULT_COLUMNS         26
 #define COL_IND                 1 
 #define TILE                    1
 #define ROW_IND                 0
@@ -39,8 +37,6 @@ Board::Board(int* dimensions) {
     rows = dimensions[ROW_IND];
     columns = dimensions[COL_IND];
 
-    
-
     // Loads Board
     for (int row = 0; row < rows; row++) {
         vector<Tile*> rowVec;
@@ -61,6 +57,7 @@ Board::Board(int* dimensions) {
  */
 Board::Board(string size, string tiles){
     size_t comma = size.find(',');
+
     rows = stoi(size.substr(0,comma));
 
     columns = stoi(size.substr(comma + SKIP_CHAR));
@@ -174,7 +171,7 @@ int* rPtr, int* cPtr){
     firstCheck = true,
     checkDown = row < rows - TILE,
     checkUp = row != 0,
-    checkRight = col < columns,
+    checkRight = col < columns - TILE,
     checkLeft = col != 0;
 
     int rCount = TILE,
@@ -843,18 +840,6 @@ void Board::clearLocations(vector<int*>* locations) {
 
 void Board::multipleScore(vector<int*>* locations, int* scorePtr,
 vector<Tile*>* tiles, int rCount, int cCount, int dist) {
-   /*   |  |  |  |  |  |
-    *   |  |X0|  |  |  |
-    *   |  |x1|  |  |  |
-    *   |  |x2|Y2|  |  |
-    *   |  |  |  |  |  |
-    */  
-
-    // Dist equals the number of tiles in our line (minus one?)
-    // rCount any extra tiles if our line is a column
-    // cCount any extra tiles if our line is a row
-
-    cout << rCount << "row, column: " << cCount << " dist " << dist << endl;
 
     int tilesPlaced = tiles->size(),
     score = 0;
@@ -871,75 +856,3 @@ vector<Tile*>* tiles, int rCount, int cCount, int dist) {
 
     *scorePtr += score;
 }
-
-
-
-/*
-void Board::multipleScore(vector<int*>* locationsPtr,
-vector<Tile*>* tilesPtr, int* score) {
-    
-    vector<int*> locations = *locationsPtr;
-    vector<Tile*> tiles = *tilesPtr;
-    int outerInd = 0;
-
-    for(int* location : locations) {
-        int tRow = location[ROW_IND],
-        tCol = location[COL_IND],
-        rCount = 0,
-        cCount = 0;
-
-        *score += TILE;
-
-        getCount(tRow, tCol, &rCount, true);
-        cout << rCount;
-        *score += rCount;
-        
-        getCount(tRow, tCol, &cCount, false);
-        cout << cCount;
-        *score += cCount;
-
-
-        if(rCount == QWIRKLE) {
-            *score += QWIRKLE;
-        }
-
-        if(cCount == QWIRKLE) {
-            *score += QWIRKLE;
-        }
-
-        int innerInd = 0;
-
-        for(int* other : locations) {
-
-            if(innerInd > outerInd) {
-                int oRow = other[ROW_IND],
-                oCol = other[COL_IND];
-
-                bool sameRow = (oRow == tRow) && (oCol != tCol),
-                sameCol = (oRow != tRow) && (oCol == tCol);
-                
-                if(sameRow){
-                    *score -= TILE;
-                } else if (sameCol) {
-                    *score -= TILE;
-                }
-                
-                cout << "removed" << endl;
-
-                if(rCount == QWIRKLE && sameRow) {
-                    *score -= QWIRKLE;
-                }
-
-                if(cCount == QWIRKLE && sameCol) {
-                    *score -= QWIRKLE;
-                }
-            }
-            innerInd++;
-        }
-        outerInd++;          
-    }    
-}
-
-
-
-*/

@@ -1,0 +1,7 @@
+2
+Tests/FourPlayers/FourPlayers.save
+place O2 at Y3
+replace B6
+place R2 at X3
+place R3 at X2
+^D

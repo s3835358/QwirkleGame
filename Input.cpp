@@ -82,7 +82,7 @@ int* Input::getBoardSize(bool* isEOF){
                 int count = 0;
                 
                 if(size.length() > 0) {
-                        valid = true;
+                    valid = true;
                 }
 
                 for(string size : sizes) {
@@ -94,7 +94,7 @@ int* Input::getBoardSize(bool* isEOF){
                         
                         if(char_dig == ONE_DIGIT && valid) {
 
-                            valid = (c <= MAX_FIRST) && (c >= MIN_DIGIT);
+                            valid = (c >= MIN_DIGIT) && (c <= MAX_DIGIT);
                             
                             if(c == MAX_FIRST) {
                                 max = true;
