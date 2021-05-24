@@ -7,23 +7,25 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include <vector>
 
-#define P1_NAME         1
-#define P1_SCORE        2
-#define P1_HAND         3
-#define P2_NAME         4
-#define P2_SCORE        5
-#define P2_HAND         6
-#define BOARD_SIZE      7
-#define BOARD_INIT      8
-#define TILE_INIT       9
-#define CURRENT         10
+#define FIRST_LINE      1
+#define PLAYER_NAME     1
+#define PLAYER_SCORE    2
+#define PLAYER_HAND     3
+
+#define LOAD_PLAYER     3
+#define BOARD_SIZE      1
+#define BOARD_INIT      2
+#define TILE_INIT       3
+#define CURRENT         4
 #define COLOURS         "ROYGBP"
 #define SKIP_CHAR       1
 
 using std::string;
 using std::ifstream;
 using std::stringstream;
+using std::vector;
 
 Load::Load(){
 }
@@ -35,55 +37,105 @@ Load::Load(){
  * ensuring that the game can be terminated by entering the END text defined in board
 */
 
-void Load::loadGame(Player* player1, Player* player2, Board** board, 
-LinkedList** tileBag, Player** currentPlayer, string path, bool* isEOF){
+void Load::loadGame(vector<Player*>* playerListPtr, Board** board, 
+LinkedList** tileBag, Player** currentPlayer, string path, bool* isEOF) {
     
-    string savedGameContent = "";
-    string boardSize = "";
-    int lineNumber = P1_NAME;
+    string savedGameContent = "",
+    boardSize = "",
+    playerInfo = "";
+
+    int lineNumber = FIRST_LINE;
+    int lineCount = 0;
+    bool readingPlayer = true,
+
+    playersRead = false;
     ifstream savedGame;
     savedGame.open(path);
-    
     // Saves the line into SAVEDGAMECONTENT
-    while (getline(savedGame, savedGameContent)){       
+    while (getline(savedGame, savedGameContent)) {       
+        
+        size_t isPlayer = savedGameContent.find(',');
 
-        if (lineNumber == P1_NAME){
-            loadPlayerName(player1, savedGameContent);
 
-        } else if (lineNumber == P1_SCORE){
-            loadPlayerScore(player1, savedGameContent);
+        if(readingPlayer) {
+
+            lineCount++;
+            playerInfo += savedGameContent + '\n';
+
+            if(lineCount % LOAD_PLAYER == 0) {
+                loadPlayers(playerListPtr, playerInfo);
+                readingPlayer = false;
+                playerInfo = "";
+            }
+
+        } else if(isPlayer == std::string::npos && !playersRead) {
             
-        } else if (lineNumber == P1_HAND){
-            LinkedList* hand = player1->getHand();
-            loadList(&hand, savedGameContent);
-            
-        } else if (lineNumber == P2_NAME){
-            loadPlayerName(player2, savedGameContent);
+            readingPlayer = true;
+            playerInfo += savedGameContent + '\n';
+            lineCount++;
 
-        } else if (lineNumber == P2_SCORE){
-            loadPlayerScore(player2, savedGameContent);
+        } else {
 
-        } else if (lineNumber == P2_HAND){
-            LinkedList* hand = player2->getHand();
-            loadList(&hand, savedGameContent);
+            playersRead = true;
+        
+        }
 
-        } else if (lineNumber == BOARD_SIZE){
+        
+        if (lineNumber == BOARD_SIZE + lineCount) {
             // set board size
             boardSize = savedGameContent;
-        } else if (lineNumber == BOARD_INIT){
+
+        } else if (lineNumber == BOARD_INIT + lineCount) {
             *board = new Board(boardSize, savedGameContent);
-        } else if (lineNumber == TILE_INIT){
+
+        } else if (lineNumber == TILE_INIT + lineCount) {
             loadList(tileBag, savedGameContent);
-        }  else if (lineNumber == CURRENT){
-            if (savedGameContent == player1->getPlayerName()){
-                *currentPlayer = player1;
-            } else if(savedGameContent == player2->getPlayerName()){
-                *currentPlayer = player2;
+
+        }  else if (lineNumber == CURRENT + lineCount) {
+
+            for(Player* player : *playerListPtr) {
+                if(savedGameContent == player->getPlayerName()) {
+                    *currentPlayer = player;
+                }
             }
+
         }  
 
         ++lineNumber;
     }
+}
+
+void Load::loadPlayers(vector<Player*>* playerListPtr,
+string playerInfo) {
+
+    std::istringstream info(playerInfo);
+    std::string savedGameContent = "";
+    int lineNumber = FIRST_LINE;
+    Player* player = new Player("", PLAYER_SCORE);
+
+    while (getline(info, savedGameContent)) {
+       
+
+        if(lineNumber == PLAYER_NAME) {
+            std::cout << "Name: " << savedGameContent << std::endl;
+            loadPlayerName(player, savedGameContent);
+
+        } else if (lineNumber == PLAYER_SCORE) {
+            std::cout << "Score: " << savedGameContent << std::endl;
+            loadPlayerScore(player, savedGameContent);
+                
+        } else if (lineNumber == PLAYER_HAND) {
+            std::cout << "Hand: " << savedGameContent << std::endl;
+
+            LinkedList* hand = player->getHand();
+            
+            loadList(&hand, savedGameContent);
+        }
+
+        lineNumber++;
+    }
+
+    playerListPtr->push_back(player);
 }
 
 /*

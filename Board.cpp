@@ -18,6 +18,9 @@
 #define RIGHT                   2
 #define LEFT                    3
 #define MIN_CHAR                'A'
+#define MAX_UPPERCASE           'Z'
+#define CHARS_SKIPPED           6
+#define INIT                    0
 
 using std::vector;
 using std::string;
@@ -25,24 +28,28 @@ using std::cout;
 using std::endl;
 using std::to_string;
 
-vector<vector<Tile*>> board (DEFAULT_ROWS, vector<Tile*> (DEFAULT_COLUMNS));
+
 
 /*
  *  Our game board. Assigns tiles to a location [row][column].
  *  Default constructor.
  */
-Board::Board() {
+Board::Board(int* dimensions) {
 
-    rows = DEFAULT_ROWS;
-    columns = DEFAULT_COLUMNS;
+    rows = dimensions[ROW_IND];
+    columns = dimensions[COL_IND];
+
+    
 
     // Loads Board
-    for (int row = 0; row < rows; row++) { 
+    for (int row = 0; row < rows; row++) {
+        vector<Tile*> rowVec;
         for (int column = 0; column < columns; column++) { 
-            board[row][column] = nullptr;
+            rowVec.push_back(nullptr);
         }
-        
-    }    
+        board.push_back(rowVec);
+    } 
+       
     isEmpty = true;
 } 
 
@@ -57,6 +64,14 @@ Board::Board(string size, string tiles){
     rows = stoi(size.substr(0,comma));
 
     columns = stoi(size.substr(comma + SKIP_CHAR));
+
+    for (int row = 0; row < rows; row++) {
+        vector<Tile*> rowVec;
+        for (int column = 0; column < columns; column++) { 
+            rowVec.push_back(nullptr);
+        }
+        board.push_back(rowVec);
+    } 
     
     isEmpty = true;
     if(tiles.size() > 0){
@@ -152,7 +167,6 @@ int* cPtr){
  *  Note: 'rPtr' and 'cPtr' count the tiles traversed during our checks,
  *  used by GameEngine to updateScores and check for QWIRKLE
  */
-
 bool Board::isLegalPlace(int row, int col, Tile* tile,
 int* rPtr, int* cPtr){
 
@@ -211,7 +225,7 @@ int* cPtr, bool valid, bool* firstCheck, int direction) {
         
         // firstCheck allows us to init valid = false,
         // once an invalid tile has been found we stop checking
-        if(valid || *firstCheck) {
+        if((valid || *firstCheck) && other != nullptr) {
             valid = tile->compare(other);
             *firstCheck = false;
         }
@@ -236,6 +250,7 @@ int* cPtr, bool valid, bool* firstCheck, int direction) {
         } else {
             other = nullptr;
         }
+
     }
 
     *rPtr += rCount;
@@ -251,7 +266,13 @@ int* cPtr, bool valid, bool* firstCheck, int direction) {
  */
 int* Board::getLocation(string locStr){
     int* location = new int[2];
-    location[ROW_IND] = locStr[ROW_IND] - MIN_CHAR;
+    char row = locStr[ROW_IND];
+
+    if(row > MAX_UPPERCASE) {
+        row = row - CHARS_SKIPPED;
+    }
+
+    location[ROW_IND] = row - MIN_CHAR;
     location[COL_IND] = stoi(locStr.substr(COL_IND));
     return location;
 }
@@ -316,6 +337,10 @@ string Board::getTiles(){
             colLabel++;
         }
 
+        if(rowLabel == 'Z') {
+            rowLabel += CHARS_SKIPPED;
+        }
+
         colLabel = 0;
         rowLabel++;
     }
@@ -353,13 +378,20 @@ void Board::printBoard() {
     for(int colLabel = 0; colLabel < columns; colLabel++){
         cout << "---";
     }
+    
     cout << endl;
     char rowLabel = MIN_CHAR;
     
     // For each row, we print the label, grid, and any tiles within
     for (int row = 0; row < rows; row++) {
         cout << rowLabel << "  " << "|";     
+        
+        if(rowLabel == MAX_UPPERCASE) {
+            rowLabel += CHARS_SKIPPED;
+        }
+        
         rowLabel++;
+        
 
         for (int column = 0; column < columns; column++) {
             
@@ -380,128 +412,534 @@ void Board::printBoard() {
  * 
  */
 
-bool Board::multiplePlace(vector<int*>* locationsPtr, vector<Tile*>* tilesPtr) {
+// FIRST STOP
+bool Board::multiplePlace(vector<int*>* locations, vector<Tile*>* tiles, 
+int* score, bool sameRow) {
+    
     bool placed = false;
 
-    // tiles are Y6, locations are A2, G23
-
     // Already know locations are within bounds, don't know if 'valid'
-    placed = checkMultiple(locationsPtr, tilesPtr);
-    if(!placed) {
-        deleteMultiple(locationsPtr);
+    int* min = nullptr;
+    int* max = nullptr;
+    int rCount = 0,
+    cCount = 0,
+    dist = 0;
+
+    placed = checkMultiple(locations, tiles, sameRow, &min, &max, &rCount,
+    &cCount, &dist);
+    
+    if(placed) {
+
+        int counter = 0;
+        isEmpty = false;
+
+        for(int* location : *locations) {
+
+            int row = location[ROW_IND],
+            col = location[COL_IND];
+            
+            if(board[row][col] == nullptr) {
+                
+                board[row][col] = tiles->at(counter); 
+
+            } else {
+
+                placed = false;
+                clearLocations(locations);
+                
+            }
+
+            counter++;
+        }
+
+        if(placed) {
+            multipleScore(locations, score, tiles, rCount, cCount, dist);
+        }
+        
     }
 
     return placed;
 }
 
-void Board::deleteMultiple(vector<int*>* locationsPtr) {
-    vector<int*> locations = *locationsPtr;
-    Tile* tile = nullptr;
-   
-    for(int* location : locations) {
-        int row = location[ROW_IND];
-        int col = location[COL_IND];
-        
-        tile = board[row][col];
-        board[row][col] = nullptr;
-        delete tile;
+bool Board::checkMultiple(vector<int*>* locations, vector<Tile*>* tiles,
+bool sameRow, int** min, int** max, int* rPtr, int* cPtr, int* dist) {
+    
+    // Find location with 'lowest' value and location with 'highest' value
+    findMinMax(locations, min, max, sameRow);
+    
+    bool reached = false;
+
+    // Are our tiles all connceted to each other
+    bool valid = checkLine(min, max, sameRow, &reached, locations,
+    tiles, dist);
+
+    if(valid && !isEmpty) {
+        valid = checkBoard(locations, tiles, sameRow, &reached, rPtr, cPtr);
     }
+    
+    bool notConnected = !reached && !isEmpty;
+    
+    if(notConnected) {
+        valid = false;
+    }
+    
+    return valid;
 }
 
-bool Board::checkMultiple(vector<int*>* locationsPtr,
-vector<Tile*>* tilesPtr) {
-    bool valid = true;
+bool Board::checkLine(int** minPtr, int** maxPtr, bool sameRow, 
+bool* reached, vector<int*>* locations, vector<Tile*>* tiles, int* dist) {
+
+    int* min = *minPtr;
+    int* max = *maxPtr;
+
+    if(sameRow) {
+        *dist = max[COL_IND] - min[COL_IND];
+    } else {
+        *dist = max[ROW_IND] - min[ROW_IND];
+    }
+
+    int locSize = locations->size();
+
+    // Check that the tiles we are placing are connected
+    bool connected = lineConnected(*dist, min, locSize, sameRow);
+
+    if(connected) {
+
+        bool checkGreater = false;
+
+        connected = checkBeyond(min, max, dist, reached, tiles, 
+        sameRow, checkGreater);
+
+        if(connected) {
+            checkGreater = true;
+
+            connected = checkBeyond(min, max, dist, reached, tiles, 
+            sameRow, checkGreater);
+        }
+    }
+
+    if(*dist >= QWIRKLE) {
+        connected = false;
+    }
     
-    vector<int*> locations = *locationsPtr;
-    vector<Tile*> tiles = *tilesPtr;
-    int i = 0;
-    int rCount = 0,
-    cCount = 0;
+    return connected;   
+}
 
-    Tile* tile = nullptr;
+bool Board::checkBoard(vector<int*>* locations, vector<Tile*>* tiles,
+bool sameRow, bool* reached, int* rPtr, int* cPtr) {
 
-    // Place tiles first as we don't ask user for tiles in any specific order
-    for(int* location : locations) {
-        int row = location[ROW_IND];
-        int col = location[COL_IND];
+    int counter = 0,
+    locSize = locations->size();
+
+    bool valid = false,
+    checking = true;
+
+    while(checking && counter < locSize) {
+
+        Tile* tile = tiles->at(counter);
+        int* location = locations->at(counter);
         
-        // Should vector be initialised as vector<Tile*> instead?
-        // Assume locations & tiles are same size, haven't checked tile validity
-        Tile* tile = tiles.at(i);
+        bool connected = false;
 
-        if(board[row][col] == nullptr){
-            board[row][col] = tile;
-        } else {
-            delete tile;
+        int row = location[ROW_IND],
+        col = location[COL_IND];
+        
+        int rCount = 0,
+        cCount = 0;
+
+        connected = checkNeighbours(row, col, tile, sameRow, &rCount, &cCount,
+        reached);
+        
+        // If one of our tiles are connected our placement is valid
+        if(connected) {
+            valid = true;
+        }
+
+        // If any of our tiles cause a line > 6 our placement is invalid
+        if(rCount >= QWIRKLE || cCount >= QWIRKLE) {
+
             valid = false;
+            checking = false;
+
         }
 
-        i++;
+        // Need to assign to rCount then increment to avoid unused variable
+        *rPtr += rCount;
+        *cPtr += cCount;
+
+        counter++;
     }
 
-    // Then check validity
-    if(valid) {
+    
+    // If our placement isn't connected to any tiles but our board is empty,
+    // our placement is valid
+    if(!valid) {
+        valid = isEmpty;
+    }
+    
+    return valid;
+}
 
-        for(int* location : locations) {
-            // Better to use while(valid) ?
-            if(valid) {
-                int row = location[ROW_IND];
-                int col = location[COL_IND];
-                tile =  board[row][col];
-                valid = isLegalPlace(row, col, tile, &rCount, &cCount);
+bool Board::checkBeyond(int* min, int* max, int* distPtr, bool* reached,
+vector<Tile*>* tilesPtr, bool sameRow, bool checkGreater) {
+
+    int row = min[ROW_IND],
+    col = min[COL_IND],
+    dist = *distPtr;
+
+    if(checkGreater) {
+        row = max[ROW_IND],
+        col = max[COL_IND];
+    }
+
+    vector<Tile*> tiles = *tilesPtr;
+    Tile* other = nullptr;
+
+    bool valid = true;
+
+    bool searching = getNextTile(sameRow, &col, &row, checkGreater, &other);
+
+    while(searching) {
+        
+        if (other != nullptr) {
+
+            for(Tile* tile : tiles) {
+                
+                if(valid) {
+                    valid = tile->compare(other);
+                }
             }
+
+            dist++;
+            *reached = true;
+
+        } else {
+            searching = false;
+        }
+        
+        if(searching) {
+            searching = getNextTile(sameRow, &col, &row, checkGreater, &other);
         }
     }
 
-
-
-    // Do something with rCount + cCount
-    // Alter scoring for multiple
-
-    /*
-     * Added G2, G5 and Y5
-     * |  |  |  |  |  |  |  |
-     * |  |  |  |  |  |  |  |
-     * |  |Y3|G3|  |  |  |  | 
-     * |  |  |G2|  |  |  |  | 
-     * |  |  |G5|Y5|  |  |  |
-     * |  |  |  |  |  |  |  |
-     * |  |  |  |  |  |  |  |
-     * |  |  |  |  |  |  |  |   
-     * 
-     * Y5 2pts
-     * G5 5pts
-     * G2 3pts
-     */
-
-
-    cout << "Check: " << valid << endl;
+    *distPtr = dist;
 
     return valid;
 }
 
-/*Board::Board(Board &other) {
-    rows = other.getRows();
-    columns = other.getColumns();
-    isEmpty = true;
-    Tile* tile = nullptr;
+bool Board::getNextTile(bool sameRow, int* col, int* row, bool checkGreater,
+Tile** other) {
+    
+    bool searching = true;
 
-    for (int row = 0; row < rows; row++) { 
-        for (int column = 0; column < columns; column++) { 
+    if(sameRow && *col > 0 && !checkGreater) {
+        
+        *col -= TILE;
+        *other = board[*row][*col];
 
-            board[row][column] = nullptr;
-            tile = other.getTile(row, column);
+    } else if (!sameRow && *row > 0 && !checkGreater) {
+        
+        *row -= TILE;
+        *other = board[*row][*col];
+
+    } else if(sameRow && *col < (columns - TILE) && checkGreater) {
+        
+        *col += TILE;
+        *other = board[*row][*col];
+
+    } else if (!sameRow && *row < (rows - TILE) && checkGreater) {
+
+        *row += TILE;
+        *other = board[*row][*col];
+
+    } else {
+        searching = false;
+    }
+
+    return searching;
+}
+
+
+
+bool Board::checkNeighbours(int row, int col, Tile* tile, bool sameRow,
+int* rPtr, int* cPtr, bool* reached) {
+
+    bool valid = false;
+    int score = 0;
+
+    if(sameRow) {
+
+        // Valid if connected to a tile (of same suit/shape)
+        // If no tiles are found we return the existing boolean value
+        valid = searchDirection(row, col, tile, &score,
+        UP, reached);
+
+        if(valid) {
+            valid = searchDirection(row, col, tile, &score,
+            DOWN, reached);
+        }
+        
+    } else {
+
+        valid = searchDirection(row, col, tile, &score,
+        LEFT, reached);
+
+        if(valid) {
+            valid = searchDirection(row, col, tile, &score,
+            RIGHT, reached);
+        }
+    }
+
+    if(sameRow) {
+        *cPtr += score;
+    } else {
+        *rPtr += score;
+    }
+
+    return valid;
+}
+
+bool Board::lineConnected(int dist, int* min, int locSize, bool sameRow) {
+
+    int gaps = 0,
+    row = min[ROW_IND],
+    col = min[COL_IND];
+
+    for(int i = TILE; i < dist; i++) {
+        
+        if(sameRow) {
+            col++;
+        } else {
+            row++;
+        }
+
+        if(board[row][col] == nullptr) {
+            gaps++;
+        }
+    }    
+    
+    // We have not yet place our tiles, hence we expect some nullptrs
+    int toPlace = locSize - TILE - TILE;
+    
+    bool connected = true,
+    missingTiles = (gaps > toPlace);
+
+    if(missingTiles) {
+        connected = false;
+    }
+
+    return connected;
+}
+
+/*
+ *  Finds the loactions with the minimum/lowest and maximum/highest row/col
+ *  values in our vector. 
+ * 
+ *  Assumes locations vector isn't empty and that
+ *  locations either share a row or a column value.
+ * 
+ *  Assigns minimum and maximum values to namesake pointers.
+ */
+void Board::findMinMax(vector<int*>* locations, int** minPtr, 
+int** maxPtr, bool sameRow) {
+
+    int* min = locations->at(INIT);
+    int* max = locations->at(INIT);
+
+    for(int* location : *locations) {
+
+        int row = location[ROW_IND],
+        col = location[COL_IND];
             
-            if(tile != nullptr) {
-                board[row][column] = new Tile(*tile);
-                cout << tile;
-                cout << board[row][column];
-                isEmpty = false;
+        if(sameRow && (col > max[COL_IND])) {
+            max = location;
+
+        } else if (sameRow && (col < min[COL_IND])) {
+            min = location;
+
+        } else if(!sameRow && (row > max[ROW_IND])) {
+            max = location;
+
+        } else if (!sameRow && (row < min[ROW_IND])) {
+            min = location;
+        }    
+    }
+
+    *minPtr = min;
+    *maxPtr = max;
+}
+
+bool Board::searchDirection(int row, int col, Tile* tile, int* scorePtr, 
+int direction, bool* reached) {
+    
+    Tile* other = board[row][col];
+    int count = 0,
+    score = 0;
+
+    bool firstCheck = true,
+    valid = true;
+
+    while(other != nullptr || count <= TILE){
+        
+        // firstCheck allows us to init valid = false,
+        // once an invalid tile has been found we stop checking
+
+        if((valid || firstCheck) && other != nullptr) {
+
+            valid = tile->compare(other);
+            
+            firstCheck = false;
+            *reached = true;
+            score++;
+        }
+
+        if(direction == DOWN) {
+
+            row++;
+
+        } else if(direction == UP) {
+
+            row--;
+
+        } else if(direction == RIGHT) {
+
+            col++;
+
+        } else if(direction == LEFT) {
+
+            col--;
+
+        }
+        
+        // Within loop to allow checking edge but not beyond
+        bool inBounds = row >= 0 && col >= 0 && row < rows && col < columns;
+
+        if(inBounds) {
+            other = board[row][col];
+            
+        } else {
+            other = nullptr;
+        }
+
+        count++;
+    }
+
+    // Can't directly increment *scorePtr otherwise 'unused variable warning'
+    *scorePtr += score; 
+
+    return valid;
+}
+
+void Board::clearLocations(vector<int*>* locations) {
+    
+    for(int* location : *locations) {
+        
+        int row = location[ROW_IND],
+        col = location[COL_IND];
+        
+        board[row][col] = nullptr;
+    }
+}
+
+void Board::multipleScore(vector<int*>* locations, int* scorePtr,
+vector<Tile*>* tiles, int rCount, int cCount, int dist) {
+   /*   |  |  |  |  |  |
+    *   |  |X0|  |  |  |
+    *   |  |x1|  |  |  |
+    *   |  |x2|Y2|  |  |
+    *   |  |  |  |  |  |
+    */  
+
+    // Dist equals the number of tiles in our line (minus one?)
+    // rCount any extra tiles if our line is a column
+    // cCount any extra tiles if our line is a row
+
+    cout << rCount << "row, column: " << cCount << " dist " << dist << endl;
+
+    int tilesPlaced = tiles->size(),
+    score = 0;
+
+    dist += TILE;
+
+    for(int count = 0; count < tilesPlaced; count++) {
+        
+        score += dist;
+        dist -= TILE;
+    }
+
+    score += rCount + cCount;
+
+    *scorePtr += score;
+}
+
+
+
+/*
+void Board::multipleScore(vector<int*>* locationsPtr,
+vector<Tile*>* tilesPtr, int* score) {
+    
+    vector<int*> locations = *locationsPtr;
+    vector<Tile*> tiles = *tilesPtr;
+    int outerInd = 0;
+
+    for(int* location : locations) {
+        int tRow = location[ROW_IND],
+        tCol = location[COL_IND],
+        rCount = 0,
+        cCount = 0;
+
+        *score += TILE;
+
+        getCount(tRow, tCol, &rCount, true);
+        cout << rCount;
+        *score += rCount;
+        
+        getCount(tRow, tCol, &cCount, false);
+        cout << cCount;
+        *score += cCount;
+
+
+        if(rCount == QWIRKLE) {
+            *score += QWIRKLE;
+        }
+
+        if(cCount == QWIRKLE) {
+            *score += QWIRKLE;
+        }
+
+        int innerInd = 0;
+
+        for(int* other : locations) {
+
+            if(innerInd > outerInd) {
+                int oRow = other[ROW_IND],
+                oCol = other[COL_IND];
+
+                bool sameRow = (oRow == tRow) && (oCol != tCol),
+                sameCol = (oRow != tRow) && (oCol == tCol);
+                
+                if(sameRow){
+                    *score -= TILE;
+                } else if (sameCol) {
+                    *score -= TILE;
+                }
+                
+                cout << "removed" << endl;
+
+                if(rCount == QWIRKLE && sameRow) {
+                    *score -= QWIRKLE;
+                }
+
+                if(cCount == QWIRKLE && sameCol) {
+                    *score -= QWIRKLE;
+                }
             }
-        } 
+            innerInd++;
+        }
+        outerInd++;          
     }    
 }
 
-Tile* Board::getTile(int row, int col) {
-    return board[row][col];
-}*/
+
+
+*/

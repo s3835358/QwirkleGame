@@ -35,7 +35,7 @@ int main(void) {
 void runFeature(Input* input){
    bool isEOF = false;
 
-   int userInput = input->getFeature(&isEOF);
+   int userInput = input->getOption(&isEOF, false);
    
    GameEngine* gameEngine = new GameEngine(input);
 

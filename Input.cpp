@@ -9,6 +9,17 @@
 #define INPUT_MAX   "4"
 #define MIN_CHAR    'A'
 #define MAX_CHAR    'Z'
+#define PLAYER_MIN  "2"
+#define MAX_FIRST   '4'
+#define MAX_SECOND  '1'
+#define MIN_DIGIT   '0'
+#define MAX_DIGIT   '9'
+#define DIGIT       1
+#define DIMENSIONS  2
+#define ROW         0
+#define COLUMN      1
+#define TWO_DIGIT   1
+#define ONE_DIGIT   0
 
 using std::vector;
 using std::string;
@@ -50,6 +61,88 @@ string Input::saveGame(vector<string> input){
     return savedGameName;
 }
 
+int* Input::getBoardSize(bool* isEOF){
+    bool valid = false;
+    string size = "";
+    int* dimensions = new int[DIMENSIONS];
+
+    while (!valid) {
+
+        size = prompt(isEOF);
+        
+        if(!*isEOF) {
+
+            std::string sizes[DIMENSIONS] = {"",""};
+            size_t comma = size.find(',');
+            
+            if(comma != std::string::npos) {
+                sizes[ROW] = size.substr(0,comma);
+                sizes[COLUMN] = size.substr(comma + DIGIT);
+                
+                int count = 0;
+                
+                if(size.length() > 0) {
+                        valid = true;
+                }
+
+                for(string size : sizes) {
+
+                    int char_dig = 0;
+                    bool max = false;
+
+                    for(char c : size) {
+                        
+                        if(char_dig == ONE_DIGIT && valid) {
+
+                            valid = (c <= MAX_FIRST) && (c >= MIN_DIGIT);
+                            
+                            if(c == MAX_FIRST) {
+                                max = true;
+                            }
+
+                        } else if (char_dig == TWO_DIGIT && valid) {
+
+                            valid = (c >= MIN_DIGIT);
+
+                            if(max) {
+                                valid = (c <= MAX_SECOND);
+                            } else {
+                                valid = (c <= MAX_DIGIT);
+                            }
+
+                        } else {
+                            
+                            valid = false;
+
+                        }
+                        
+                        char_dig++;
+                    }
+
+                    
+                    if(valid) {
+                        dimensions[count] = std::stoi(size);
+                    }
+
+                    count++;
+                }
+                
+            } 
+
+        } else {
+            
+            valid = true;
+        }
+
+        if(!valid) {
+            cout << "Invalid input" << endl;
+        }
+        
+    }
+
+    return dimensions;
+}
+
 string Input::getPlayerName(bool* isEOF) {
     bool valid = false;
     string name = "";
@@ -66,15 +159,22 @@ string Input::getPlayerName(bool* isEOF) {
     return name;
 }
 
-int Input::getFeature(bool* isEOF) {
+int Input::getOption(bool* isEOF, bool isPlayers) {
     string userInput = "";
     bool correctInput = false;
+
+    string inputMin = INPUT_MIN;
+    if(isPlayers) {
+        inputMin = PLAYER_MIN;
+    }
     
     while (!correctInput) {
         
         userInput = prompt(isEOF);
 
-        if (userInput >= INPUT_MIN && userInput <= INPUT_MAX && userInput.size() == 1) {
+        if (userInput >= inputMin && userInput <= INPUT_MAX 
+        && userInput.size() == DIGIT) {
+
             correctInput = true;
         
         } else if (*isEOF) {
@@ -134,7 +234,7 @@ bool Input::areLetters(string playerName) {
    
     for (string::size_type i = 0; i < playerName.size(); ++i) {
       // checking if player name is an upper-case character
-        if ((playerName[i] < MIN_CHAR || playerName[i] > MAX_CHAR)) { 
+        if ((playerName[i] < MIN_CHAR || playerName[i] > MAX_CHAR)) {
             areLetters = false;
             std::cin.clear();
         }

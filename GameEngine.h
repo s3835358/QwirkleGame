@@ -23,44 +23,61 @@ public:
     
 
 private:
-    void runGame(Player* p1, Player* p2, Board* board, 
+    void runGame(std::vector<Player*>* playerListPtr, Board* board, 
     LinkedList* tileBag, Player* pCurrent, bool* isEOF);
     bool getEOFstate(bool* isEOF);
     
     void initPlayerHand(Player* player, LinkedList* tilebag);
     
-    bool runAction(Player* p1, Player* p2, Board* board, 
+    bool runAction(std::vector<Player*>* playerListPtr, Board* board, 
     LinkedList* tileBag, Player* pCurrent, bool* isEOF);
 
     bool runPlace(std::vector<std::string> actions, Board* board, 
     Player* player, LinkedList* tileBag);
     
-    void toggleCurrent(Player* p1, Player* p2, Player** pCurrent);
+    void toggleCurrent(std::vector<Player*>* playerListPtr,
+    Player** pCurrent);
 
-    bool runSave(std::vector<std::string> actions, Player* p1, Player* p2,
-    Board* board, LinkedList* tileBag, Player* pCurrent);
+    bool runSave(std::vector<std::string> actions, Player* pCurrent,
+    std::vector<Player*>* playerListPtr, Board* board, LinkedList* tileBag);
     
-    bool checkEndGame(Player* p1, Player* p2, LinkedList* tileBag);
+    bool checkEndGame(std::vector<Player*>* playerListPtr, Player* pCurrent,
+    LinkedList* tileBag);
 
-    void displayRound(Player* p1, Player* p2, 
+    void displayRound(std::vector<Player*>* playerListPtr, 
     Player* pCurrent, Board* board);
 
     void updateScore(int rCount, int cCount, bool* qwirkle, Player* player);
+
+    void multipleScore(std::vector<Tile*>* tilesPtr, int rCount,
+    int cCount, bool sameRow, Player* player);
 
     bool runReplace(std::vector<std::string> actions, Board* board, 
     Player* player, LinkedList* tileBag);
 
     bool checkMultiple(std::vector<std::string>* actions, Board* board,
-    std::vector<int*>* locationsPtr,std::vector<Tile*>* tilesPtr);
+    std::vector<int*>* locationsPtr,std::vector<Tile*>* tilesPtr, 
+    bool* sameRow);
 
     bool runMultiple(std::vector<std::string>* actions, Board* board,
-    std::vector<int*>* locationsPtr, std::vector<Tile*>* tilesPtr);
+    std::vector<int*>* locationsPtr, std::vector<Tile*>* tilesPtr, 
+    Player* player, LinkedList* tileBag);
 
     bool fileExists(std::string path);
     
     Tile* getTile(std::string tile);
 
     Input* input;
+
+    bool sameLine(std::vector<int*>* locationsPtr, 
+    std::vector<Tile*>* tilesPtr, bool* sameRow);
+
+    void refillHand(std::vector<std::string>* actionsPtr, 
+    Player* player, LinkedList* tileBag, std::vector<Tile*>* tilesPtr);
+
+    bool prepareVectors(std::vector<std::string>* actions, Board* board, 
+    std::vector<int*>* locations, std::vector<Tile*>* tiles, int* count, 
+    bool final, bool* isLoc);
 };
 
 #endif // GAME_ENGINE
