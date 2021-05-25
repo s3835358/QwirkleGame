@@ -67,10 +67,8 @@ private:
     
     Tile* getTile(std::string tile);
 
-    Input* input;
-
-    bool sameLine(std::vector<int*>* locationsPtr, 
-    std::vector<Tile*>* tilesPtr, bool* sameRow);
+    bool sameLine(std::vector<int*>* locations, 
+    std::vector<Tile*>* tiles, bool* sameRow);
 
     void refillHand(std::vector<std::string>* actionsPtr, 
     Player* player, LinkedList* tileBag, std::vector<Tile*>* tilesPtr);
@@ -78,6 +76,8 @@ private:
     bool prepareVectors(std::vector<std::string>* actions, Board* board, 
     std::vector<int*>* locations, std::vector<Tile*>* tiles, int* count, 
     bool final, bool* isLoc);
+
+    Input* input;
 };
 
 #endif // GAME_ENGINE

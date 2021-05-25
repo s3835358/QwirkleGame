@@ -424,12 +424,11 @@ void Board::printBoard() {
 }
 
 /*
- *
- *  MILESTONE 3 ONWARDS
+ *  Checks the validity of our multiple tile placement, then, if valid,
+ *  places our tiles in our board and updates the player score.
  * 
+ *  Returns true if tiles are placed succesfully.
  */
-
-// FIRST STOP
 bool Board::multiplePlace(vector<int*>* locations, vector<Tile*>* tiles, 
 int* score, bool sameRow) {
     
@@ -478,6 +477,11 @@ int* score, bool sameRow) {
     return placed;
 }
 
+/*
+ *  Performs all checks neccessary to validate our multiple tile placements.
+ *  
+ *  Returns true if our multiple tile placements are valid.
+ */
 bool Board::checkMultiple(vector<int*>* locations, vector<Tile*>* tiles,
 bool sameRow, int** min, int** max, int* rPtr, int* cPtr, int* dist) {
     
@@ -503,6 +507,12 @@ bool sameRow, int** min, int** max, int* rPtr, int* cPtr, int* dist) {
     return valid;
 }
 
+/*
+ *  Handles all checks related to the 'line' (row or column) our tiles are
+ *  placed in.
+ * 
+ *  Returns true if all checks pass.
+ */
 bool Board::checkLine(int** minPtr, int** maxPtr, bool sameRow, 
 bool* reached, vector<int*>* locations, vector<Tile*>* tiles, int* dist) {
 
@@ -522,19 +532,20 @@ bool* reached, vector<int*>* locations, vector<Tile*>* tiles, int* dist) {
 
     if(connected) {
 
-        bool checkGreater = false;
+        bool checkGreater = true;
 
         connected = checkBeyond(min, max, dist, reached, tiles, 
-        sameRow, checkGreater);
+        sameRow, !checkGreater);
 
         if(connected) {
-            checkGreater = true;
 
             connected = checkBeyond(min, max, dist, reached, tiles, 
             sameRow, checkGreater);
         }
     }
 
+    // Checks that our min and max tiles are not placed more than 6 tiles
+    // apart.
     if(*dist >= QWIRKLE) {
         connected = false;
     }
@@ -543,8 +554,13 @@ bool* reached, vector<int*>* locations, vector<Tile*>* tiles, int* dist) {
 }
 
 /*
- *  Handles checks related to existing tiles on the board when placing
- *  multiple tiles.
+ *  Handles checks related to all existing tiles on the board not in
+ *  the same line as our tiles placed. That is, if our tiles are placed
+ *  in a row, our method checks the validity of the placement against
+ *  all tiles not in that row. Same for if the tiles are placed within
+ *  a column.
+ * 
+ *  Returns true if all checks pass.
  */
 bool Board::checkBoard(vector<int*>* locations, vector<Tile*>* tiles,
 bool sameRow, bool* reached, int* rPtr, int* cPtr) {
@@ -634,6 +650,16 @@ bool Board::checkQwirkle(int* rCount, int* cCount) {
     return valid;
 }
 
+/*
+ *  Checks 'beyond' the minimum/maximum tiles placed by the player. The
+ *  
+ *  The check is limited to the 'line' (row or column) that the tiles
+ *  were placed in.
+ * 
+ *  Sets the bool pointer 'reached' to true if a tile 'beyond' is found.
+ *  
+ *  Returns true if all tiles found were of the same suit/shape.
+ */
 bool Board::checkBeyond(int* min, int* max, int* distPtr, bool* reached,
 vector<Tile*>* tilesPtr, bool sameRow, bool checkGreater) {
 
@@ -681,27 +707,40 @@ vector<Tile*>* tilesPtr, bool sameRow, bool checkGreater) {
     return valid;
 }
 
+/*
+ *  Increments our row and col values, within our bounds, in a direction
+ *  based upon 'checkGreater' and 'sameRow' values, before assigning our 
+ *  tile pointer other to the corresponding tile in our board. 
+ * 
+ *  Note that we may assign other to a nullptr.
+ * 
+ *  Returns true if we have not reached our board's bound.
+ */
 bool Board::getNextTile(bool sameRow, int* col, int* row, bool checkGreater,
 Tile** other) {
     
-    bool searching = true;
+    bool searching = true,
+    northBound = *row > 0,
+    southBound = *row < (rows - TILE),
+    eastBound = *col < (columns - TILE),
+    westBound = *col > 0;
 
-    if(sameRow && *col > 0 && !checkGreater) {
+    if(sameRow && westBound && !checkGreater) {
         
         *col -= TILE;
         *other = board[*row][*col];
 
-    } else if (!sameRow && *row > 0 && !checkGreater) {
+    } else if (!sameRow && northBound && !checkGreater) {
         
         *row -= TILE;
         *other = board[*row][*col];
 
-    } else if(sameRow && *col < (columns - TILE) && checkGreater) {
+    } else if(sameRow && eastBound && checkGreater) {
         
         *col += TILE;
         *other = board[*row][*col];
 
-    } else if (!sameRow && *row < (rows - TILE) && checkGreater) {
+    } else if (!sameRow && southBound && checkGreater) {
 
         *row += TILE;
         *other = board[*row][*col];
@@ -714,7 +753,15 @@ Tile** other) {
 }
 
 
-
+/*
+ *  Compares a tile to it's 'neighbours', that is if our multiple tiles
+ *  are placed in a row, we compare our tile to any connecting tiles in
+ *  the same column or vice-versa.
+ * 
+ *  Score is added to our rPtr and cPtr where tiles are found.
+ * 
+ *  Returns true if a tile with the same shape or colour is found.
+ */
 bool Board::checkNeighbours(int row, int col, Tile* tile, bool sameRow,
 int* rPtr, int* cPtr, bool* reached) {
 
@@ -743,7 +790,6 @@ int* rPtr, int* cPtr, bool* reached) {
             RIGHT, reached);
         }
     }
-    cout << tile->toString() << " score " << score <<endl;
 
     if(sameRow) {
         *cPtr += score;
@@ -754,6 +800,11 @@ int* rPtr, int* cPtr, bool* reached) {
     return valid;
 }
 
+/*
+ *  Checks that all tiles placed are connected in a single line.
+ *  
+ *  Returns true if line is connected.
+ */
 bool Board::lineConnected(int dist, int* min, int locSize, bool sameRow) {
 
     int gaps = 0,
@@ -824,6 +875,13 @@ int** maxPtr, bool sameRow) {
     *maxPtr = max;
 }
 
+/*
+ *  Checks for any tiles in a direction from a location given by row, column,
+ *  any tiles found are compared to 'tile'.
+ * 
+ *  Returns true if no tiles found or if tiles found share the same colour
+ *  or shape.
+ */
 bool Board::searchDirection(int row, int col, Tile* tile, int* scorePtr, 
 int direction, bool* reached) {
     
@@ -885,6 +943,9 @@ int direction, bool* reached) {
     return valid;
 }
 
+/*
+ *  Assigns all locations in the board, given by 'locations' to nullptr;
+ */
 void Board::clearLocations(vector<int*>* locations) {
     
     for(int* location : *locations) {
@@ -896,6 +957,10 @@ void Board::clearLocations(vector<int*>* locations) {
     }
 }
 
+/*
+ *  Updates the score (via scorePtr) for player following a multiple 
+ *  tile placement.
+ */
 void Board::multipleScore(vector<int*>* locations, int* scorePtr,
 vector<Tile*>* tiles, int rCount, int cCount, int dist) {
 
@@ -904,7 +969,7 @@ vector<Tile*>* tiles, int rCount, int cCount, int dist) {
     count = 0;
 
     if(rCount + cCount > 0) {
-        // Only for an unconnected placement should we
+        // Only for an 'unconnected' placement should we
         // add +1 for a tile
         count++;
     }

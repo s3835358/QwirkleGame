@@ -31,10 +31,12 @@ Load::Load(){
 }
 
 /*
- * Loads a game from a particular file
- * Ensures the following are loaded: player1, player2, the board state, the tile bag
- * the player whose turn it currently is, the path of the file and the isEOF boolean
- * ensuring that the game can be terminated by entering the END text defined in board
+ * Loads a game from a particular file.
+
+ * Ensures the following are loaded: any players included, the board state, 
+ * the tile bag the player whose turn it currently is, the path of the file 
+ * and the isEOF boolean ensuring that the game can be terminated by entering
+ * the END text defined in board.
 */
 
 void Load::loadGame(vector<Player*>* playerListPtr, Board** board, 
@@ -105,6 +107,9 @@ LinkedList** tileBag, Player** currentPlayer, string path, bool* isEOF) {
     }
 }
 
+/*
+ *  Loads the name, score and hand for a player, the adds it to playerList.
+ */
 void Load::loadPlayers(vector<Player*>* playerListPtr,
 string playerInfo) {
 
@@ -138,7 +143,6 @@ string playerInfo) {
 /*
  * Gets a players name and sets it
 */
-
 void Load::loadPlayerName(Player* player, string name){
    player->setPlayerName(name);
 }

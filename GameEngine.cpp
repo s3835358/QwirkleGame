@@ -557,11 +557,10 @@ Player* pCurrent, LinkedList* tileBag) {
 }
 
 /*
+ *  Overseas the lifespan of the multiple tile placement command.
  *
- *    MILESTONE 3 ONWARDS
- *
+ *  Returns true if tile placement executes successfully.
  */
-
 bool GameEngine::runMultiple(vector<string>* actionsPtr, Board* board, 
 vector<int*>* locationsPtr, vector<Tile*>* tilesPtr, Player* player,
 LinkedList* tileBag) {
@@ -573,9 +572,6 @@ LinkedList* tileBag) {
    if(valid) {
 
       int score = player->getPlayerScore();
-
-      // We have checked, that tiles and locations have valid formats,
-      // and that there are multiple tiles
 
       valid = board->multiplePlace(locationsPtr, tilesPtr, &score, sameRow);
 
@@ -591,6 +587,12 @@ LinkedList* tileBag) {
    return valid;
 }
 
+/*
+ * Checks that a multiple tile placement command contains valid
+ * locations and tiles. Loads into appropriate vector data structures.
+ * 
+ * Returns true if command is valid and therefore loads correctly.
+ */
 bool GameEngine::checkMultiple(vector<string>* actions, Board* board,
 vector<int*>* locations, vector<Tile*>* tiles, bool* sameRow) {
    
@@ -627,6 +629,12 @@ vector<int*>* locations, vector<Tile*>* tiles, bool* sameRow) {
    return isLoc;
 }
 
+/*
+ * Takes the user input 'actions' and loads the vectors 'locations' and
+ * 'tiles' with their namesakes.
+ * 
+ * Returns true is locations and tiles are valid locations and tiles.
+ */
 bool GameEngine::prepareVectors(vector<string>* actions, Board* board,
 vector<int*>* locations, vector<Tile*>* tiles, int* countPtr, 
 bool final, bool* isLoc) {
@@ -678,6 +686,10 @@ bool final, bool* isLoc) {
    return actionExists;
 }
 
+/*
+ * Removes 'tiles' from player hand and given tile bag is not empty,
+ * hand is refilled.
+ */
 void GameEngine::refillHand(vector<string>* actionsPtr, Player* player,
 LinkedList* tileBag, vector<Tile*>* tilesPtr) {
 
@@ -695,13 +707,16 @@ LinkedList* tileBag, vector<Tile*>* tilesPtr) {
    }
 }
 
-bool GameEngine::sameLine(vector<int*>* locationsPtr,
-vector<Tile*>* tilesPtr, bool* sameRow) {
+/*
+ * For a multiple tile placement, checks that all tiles being placed are
+ * being placed in the same line and of the same shape or colour.
+ * 
+ * Returns true if placement meets these conditions.
+ */
+bool GameEngine::sameLine(vector<int*>* locations,
+vector<Tile*>* tiles, bool* sameRow) {
 
-   vector<int*> locations = *locationsPtr;
-   vector<Tile*> tiles = *tilesPtr;
-
-   int size = locations.size(),
+   int size = locations->size(),
    counter = 0;
 
    int* prevInt = nullptr;
@@ -717,8 +732,8 @@ vector<Tile*>* tilesPtr, bool* sameRow) {
       prevInt = location;
       prevTile = tile;
       
-      location = locations.at(counter);
-      tile = tiles.at(counter);
+      location = locations->at(counter);
+      tile = tiles->at(counter);
 
       if(prevInt != nullptr) {
 
@@ -730,7 +745,6 @@ vector<Tile*>* tilesPtr, bool* sameRow) {
             sameCol = true;
          }
 
-         // Checks tiles a
          if(!prevTile->compare(tile)) {
             sameLine = false;
          }
@@ -745,26 +759,3 @@ vector<Tile*>* tilesPtr, bool* sameRow) {
 
    return sameLine;
 }
-/*
-void GameEngine::multipleScore(vector<Tile*>* tilesPtr, int rCount,
-int cCount, bool sameRow, Player* player) {
-
-   vector<Tile*> tiles = *tilesPtr;
-   int size = tiles.size();
-
-   cout << rCount << " " << cCount << size;
-
-   if(sameRow) {
-      cCount;
-   } else {
-      rCount = cCount/size;
-   }
-
-   // May not count tile twice
-   int score = player->getPlayerScore();
-   
-   score += rCount + cCount;
-
-   player->setPlayerScore(score);
-
-}*/
