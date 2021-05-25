@@ -22,9 +22,7 @@ class Input {
         bool areLetters(std::string playerName);
         std::vector<std::string> splitActions(std::string action);
         bool getMultiple();
-       
-
-
+        bool Input::checkSizeInput(std::string size, int** dimensions);
 }; 
 
  

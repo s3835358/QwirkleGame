@@ -61,6 +61,11 @@ string Input::saveGame(vector<string> input){
     return savedGameName;
 }
 
+/*
+ *  Gets the size of our board from user input.
+ *
+ *  Returns the given dimensions.
+ */
 int* Input::getBoardSize(bool* isEOF){
     bool valid = false;
     string size = "";
@@ -72,62 +77,7 @@ int* Input::getBoardSize(bool* isEOF){
         
         if(!*isEOF) {
 
-            std::string sizes[DIMENSIONS] = {"",""};
-            size_t comma = size.find(',');
-            
-            if(comma != std::string::npos) {
-                sizes[ROW] = size.substr(0,comma);
-                sizes[COLUMN] = size.substr(comma + DIGIT);
-                
-                int count = 0;
-                
-                if(size.length() > 0) {
-                    valid = true;
-                }
-
-                for(string size : sizes) {
-
-                    int char_dig = 0;
-                    bool max = false;
-
-                    for(char c : size) {
-                        
-                        if(char_dig == ONE_DIGIT && valid) {
-
-                            valid = (c > MIN_DIGIT) && (c <= MAX_DIGIT);
-                            
-                            if(c == MAX_FIRST) {
-                                max = true;
-                            }
-
-                        } else if (char_dig == TWO_DIGIT && valid) {
-
-                            valid = (c >= MIN_DIGIT);
-
-                            if(max) {
-                                valid = (c <= MAX_SECOND);
-                            } else {
-                                valid = (c <= MAX_DIGIT);
-                            }
-
-                        } else {
-                            
-                            valid = false;
-
-                        }
-                        
-                        char_dig++;
-                    }
-
-                    
-                    if(valid) {
-                        dimensions[count] = std::stoi(size);
-                    }
-
-                    count++;
-                }
-                
-            } 
+            valid = checkSizeInput(size, &dimensions);
 
         } else {
             
@@ -141,6 +91,71 @@ int* Input::getBoardSize(bool* isEOF){
     }
 
     return dimensions;
+}
+
+/*
+ *  Checks that our board size input is valid.
+ *
+ *  Returns true if input is valid.
+ */ 
+bool Input::checkSizeInput(std::string size, int** dimensions) {
+
+    std::string sizes[DIMENSIONS] = {"",""};
+    size_t comma = size.find(',');
+    
+    bool valid = false,
+    actionExists = (comma != std::string::npos);
+
+    if(actionExists) {
+        
+        sizes[ROW] = size.substr(0,comma);
+        sizes[COLUMN] = size.substr(comma + DIGIT);
+        
+        int count = 0;
+        
+        if(size.length() > 0) {
+            valid = true;
+        }
+
+        for(string size : sizes) {
+
+            int char_dig = 0;
+            bool max = false;
+
+            for(char c : size) {
+                
+                if(char_dig == ONE_DIGIT && valid) {
+
+                    valid = (c > MIN_DIGIT) && (c <= MAX_DIGIT);
+                    
+                    if(c == MAX_FIRST) {
+                        max = true;
+                    }
+
+                } else if (char_dig == TWO_DIGIT && valid) {
+
+                    valid = (c >= MIN_DIGIT);
+
+                    if(max) {
+                        valid = (c <= MAX_SECOND);
+                    } else {
+                        valid = (c <= MAX_DIGIT);
+                    }
+
+                } else {
+                    valid = false;
+                }
+                
+                char_dig++;
+            }
+            
+            if(valid) {
+                *dimensions[count] = std::stoi(size);
+            }
+
+            count++;
+        }
+    }
 }
 
 string Input::getPlayerName(bool* isEOF) {

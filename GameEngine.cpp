@@ -400,7 +400,6 @@ Player* player, LinkedList* tileBag){
  */
 bool GameEngine::runSave(vector<string> actions, Player* pCurrent, 
 vector<Player*>* playerListPtr, Board* board, LinkedList* tileBag) {
-   
 
    ofstream savedGame;
    string savedGameName = input->saveGame(actions);
