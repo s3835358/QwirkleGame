@@ -79,6 +79,8 @@ private:
 
     void clearLocations(std::vector<int*>* locations);
 
+    bool checkQwirkle(int* rCount, int* cCount);
+
     std::vector<std::vector<Tile*>> board;
 }; 
 

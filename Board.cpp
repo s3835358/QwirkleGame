@@ -285,28 +285,48 @@ int* Board::getLocation(string locStr){
 bool Board::getLocation(string locStr, int** location){
     bool valid = true;
 
-    if(locStr.size() > COL_IND){
+    string colStr = "",
+    rowStr = "";
 
-        for(char c : locStr.substr(COL_IND)){
-            if(!isdigit(c)){
-                valid = false;
-            }
-        }
+    if(locStr.size() > COL_IND) {
 
-        if(valid){
-            int column = stoi(locStr.substr(COL_IND));
-            valid =  column < columns && column >= 0;
-        }
-        
+        colStr = locStr.substr(COL_IND);
+        rowStr = locStr.substr(0,COL_IND);
+
     } else {
         valid = false;
     }
 
+    for(char c : colStr) {
+
+        if(!isdigit(c)){
+            valid = false;
+        }
+
+    }
+
+    if(valid) {
+
+        int column = stoi(locStr.substr(COL_IND));
+        valid =  column < columns && column >= 0;
+    
+    }
+
+    int rowBound = MIN_CHAR + rows;
+
+    if(rowStr[ROW_IND] > MAX_UPPERCASE) {
+        rowBound += CHARS_SKIPPED;
+    }
+
+    bool rowInBounds = rowStr[ROW_IND] < (rowBound);
+
     // If our input is valid we get our location
-    if(valid){
+    if(rowInBounds && valid){
         // We assume our location has been initialised
         delete[] *location;
         *location = getLocation(locStr);
+    } else {
+        valid = false;
     }
 
     return valid;
@@ -522,6 +542,10 @@ bool* reached, vector<int*>* locations, vector<Tile*>* tiles, int* dist) {
     return connected;   
 }
 
+/*
+ *  Handles checks related to existing tiles on the board when placing
+ *  multiple tiles.
+ */
 bool Board::checkBoard(vector<int*>* locations, vector<Tile*>* tiles,
 bool sameRow, bool* reached, int* rPtr, int* cPtr) {
 
@@ -546,18 +570,21 @@ bool sameRow, bool* reached, int* rPtr, int* cPtr) {
 
         connected = checkNeighbours(row, col, tile, sameRow, &rCount, &cCount,
         reached);
+
+        if(rCount > 0) {
+            rCount += TILE;
+        } else if(cCount > 0) {
+            cCount += TILE;
+        }
         
         // If one of our tiles are connected our placement is valid
         if(connected) {
             valid = true;
         }
 
-        // If any of our tiles cause a line > 6 our placement is invalid
-        if(rCount >= QWIRKLE || cCount >= QWIRKLE) {
-
+        if(!checkQwirkle(&rCount, &cCount)) {
             valid = false;
             checking = false;
-
         }
 
         // Need to assign to rCount then increment to avoid unused variable
@@ -566,7 +593,6 @@ bool sameRow, bool* reached, int* rPtr, int* cPtr) {
 
         counter++;
     }
-
     
     // If our placement isn't connected to any tiles but our board is empty,
     // our placement is valid
@@ -574,6 +600,37 @@ bool sameRow, bool* reached, int* rPtr, int* cPtr) {
         valid = isEmpty;
     }
     
+    return valid;
+}
+
+/*
+ *  Checks qwirkle condition and increments score by 6 if player
+    completes a line of 6.
+
+ *  Returns false if a line of greater than 6 has been created, 
+ *  true otherwise. 
+ * 
+ *  Note true does NOT neccasraily mean a qwirkle has been achieved.
+ */
+bool Board::checkQwirkle(int* rCount, int* cCount) {
+    bool valid = true;
+    
+    if(*rCount > QWIRKLE || *cCount > QWIRKLE) {
+        
+        valid = false;
+
+    } else if (*rCount == QWIRKLE) {
+        
+        *rCount += QWIRKLE;
+
+        cout << "QWIRKLE!!!" << endl << endl;
+
+    } else if (*cCount == QWIRKLE) {
+
+        *cCount += QWIRKLE;
+
+        cout << "QWIRKLE!!!" << endl << endl;
+    }
     return valid;
 }
 
@@ -686,6 +743,7 @@ int* rPtr, int* cPtr, bool* reached) {
             RIGHT, reached);
         }
     }
+    cout << tile->toString() << " score " << score <<endl;
 
     if(sameRow) {
         *cPtr += score;
@@ -842,14 +900,24 @@ void Board::multipleScore(vector<int*>* locations, int* scorePtr,
 vector<Tile*>* tiles, int rCount, int cCount, int dist) {
 
     int tilesPlaced = tiles->size(),
-    score = 0;
+    score = 0,
+    count = 0;
+
+    if(rCount + cCount > 0) {
+        // Only for an unconnected placement should we
+        // add +1 for a tile
+        count++;
+    }
 
     dist += TILE;
+    
 
-    for(int count = 0; count < tilesPlaced; count++) {
+    while(count < tilesPlaced) {
         
         score += dist;
         dist -= TILE;
+
+        count++;
     }
 
     score += rCount + cCount;

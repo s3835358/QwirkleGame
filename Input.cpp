@@ -94,7 +94,7 @@ int* Input::getBoardSize(bool* isEOF){
                         
                         if(char_dig == ONE_DIGIT && valid) {
 
-                            valid = (c >= MIN_DIGIT) && (c <= MAX_DIGIT);
+                            valid = (c > MIN_DIGIT) && (c <= MAX_DIGIT);
                             
                             if(c == MAX_FIRST) {
                                 max = true;

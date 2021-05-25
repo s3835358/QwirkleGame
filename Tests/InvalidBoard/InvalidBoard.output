@@ -1,0 +1,31 @@
+
+Welcome to Qwirkle!
+------------------
+
+Menu
+----
+1. New Game
+2. Load Game
+3. Credits
+4. Quit
+ 
+> 
+Enter number of players (between 2-4)
+ 
+> 
+Enter board size as <rows>,<columns> ie. 3,3 (maximum row/column size of 41)
+ 
+> 
+Invalid input
+ 
+> 
+Invalid input
+ 
+> 
+Invalid input
+ 
+> 
+Invalid input
+ 
+> 
+Goodbye

@@ -59,18 +59,20 @@ void GameEngine::startNewGame(bool* isEOF){
    cout << "Enter number of players (between 2-4)" << endl;
    
    int numPlayers = input->getOption(isEOF, true);
-
-   cout << "Enter board size as <rows>,<columns> ie. 3,3" 
-   << " (maximum row/column size of 41)" << endl;
-
-   int* boardDims = input->getBoardSize(isEOF);
-
+   
+   int* boardDims = nullptr;
+    
    if(!*isEOF){
 
       int playerNum = PLAYER;
 
       vector<Player*> playerList;
       Player* player = nullptr;
+
+      cout << "Enter board size as <rows>,<columns> ie. 3,3" 
+      << " (maximum row/column size of 41)" << endl;
+
+      boardDims = input->getBoardSize(isEOF);
 
       while(playerNum <= numPlayers && !*isEOF) {
          
@@ -106,6 +108,11 @@ void GameEngine::startNewGame(bool* isEOF){
          delete tileBag;
       }
 
+      for(Player* player: playerList) {
+         delete player;
+      }
+
+      delete[] boardDims;
       
    } 
 }
@@ -648,6 +655,7 @@ bool final, bool* isLoc) {
 
    } else {
 
+      delete tile;
       delete[] location;
       *isLoc = false;
 
