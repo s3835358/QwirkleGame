@@ -98,11 +98,12 @@ int* Input::getBoardSize(bool* isEOF){
  *
  *  Returns true if input is valid.
  */ 
-bool Input::checkSizeInput(std::string size, int** dimensions) {
+bool Input::checkSizeInput(std::string size, int** dimensionsPtr) {
 
     std::string sizes[DIMENSIONS] = {"",""};
     size_t comma = size.find(',');
     
+    int* dimensions = *dimensionsPtr;
     bool valid = false,
     actionExists = (comma != std::string::npos);
 
@@ -150,12 +151,16 @@ bool Input::checkSizeInput(std::string size, int** dimensions) {
             }
             
             if(valid) {
-                *dimensions[count] = std::stoi(size);
+                dimensions[count] = std::stoi(size);
             }
 
             count++;
         }
     }
+
+    *dimensionsPtr = dimensions;
+
+    return valid;
 }
 
 string Input::getPlayerName(bool* isEOF) {
