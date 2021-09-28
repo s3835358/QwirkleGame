@@ -1,5 +1,11 @@
 # QwirkleGame
 
+Dev Team:
+- Josiah Webster
+- Declan Baker  
+- Joanna Tepaa 
+- Shaun Jia Wen Chow
+ 
 Rules for the QWIRKLE game can be found: https://www.ultraboardgames.com/qwirkle/game-rules.php
 
 The current player may take an actions:
